@@ -1,9 +1,9 @@
-from .player import Player
+from .player import Player, MyPlayer
 from .card import Card
 
 
 class GameState:
-    def __init__(self, *, my_player: Player, players: list[Player], chips_in_pot: int = 0, community_cards: set[Card] | None = None, small_blind: int = 0, big_blind: int = 0, ante: int = 0):
+    def __init__(self, *, my_player: MyPlayer, players: list[Player], chips_in_pot: int = 0, community_cards: set[Card] | None = None, small_blind: int = 0, big_blind: int = 0, ante: int = 0):
         self.my_player = my_player
         self.players = players
         self.chips_in_pot = chips_in_pot
