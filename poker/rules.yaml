@@ -1,0 +1,36 @@
+# The rules of a match.
+#
+# To try different rules, copy this file somewhere else, change the copy, and give it to poker with --rules.
+# A copy only needs the lines which are different, and everything else is taken from here.
+
+hands: 100    # A match stops after this many hands, if more than one player is still in
+stack: 200   # The chips each player starts with
+timeout: 1    # The seconds a player gets for each action, or 0 for no limit
+
+blinds:
+  small: 1
+  big: 2
+
+# Every so often the blinds go up a level, as they do in a tournament.
+# Say how often in orbits or in hands, and leave the other as 0. Leaving both as 0 keeps the blinds the same all match.
+# An orbit completes after every player still in has had the button. Player eliminations do not recalculate past orbit progress.
+blinds_go_up:
+  every_orbits: 3
+  every_hands: 0
+  # How many times the starting blinds each level is. After the last level the pattern repeats, ten times bigger.
+  levels: [1, 1.5, 2, 3, 4, 5, 7.5]
+
+# Every so often everyone loses a share of their chips, rounded in their favour.
+# This squeezes the players like bigger blinds do, but without the blinds changing. Losing 0.25 is the same as blinds a third bigger.
+# Say how often in orbits or in hands, and leave the other as 0. Leaving both as 0 turns this off.
+chips_cut:
+  every_orbits: 0
+  every_hands: 0
+  share: 0.25
+
+# From a given orbit on, everyone pays an ante into the pot at the start of every hand, on top of the blinds.
+# An orbit completes once every player still in has had the button.
+# An ante of 0 chips turns this off.
+ante:
+  chips: 2
+  from_orbit: 12
