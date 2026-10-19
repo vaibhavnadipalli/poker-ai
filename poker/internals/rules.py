@@ -31,10 +31,11 @@ class Rules:
         self.cut_every_hands: int = rules["chips_cut"]["every_hands"]
         self.cut_share: float = rules["chips_cut"]["share"]
 
-        self.ante: int = rules["ante"]["chips"]
+        self.ante: float = rules["ante"]["chips"]
         self.ante_from_orbit: int = rules["ante"]["from_orbit"]
+        self.ante_from_level: int = rules["ante"]["from_level"]
 
-        self.check()
+        self.check(endless=True)  # Whether a match can end isn't checked yet, as the command line may still set a limit on hands
 
     @staticmethod
     def replace(rules: dict, changes: dict, where: str):
@@ -50,7 +51,7 @@ class Rules:
             else:
                 rules[name] = value
 
-    def check(self):
+    def check(self, endless: bool = False):
         # Changes made after the rules are loaded, such as from the command line, can be checked by calling this again
         def whole(name: str, value, least: int):
             if not isinstance(value, int) or isinstance(value, bool) or value < least:
@@ -60,7 +61,7 @@ class Rules:
             if not isinstance(value, (int, float)) or isinstance(value, bool) or value < least or (below is not None and value >= below):
                 raise ValueError(f"Expected {name} to be a number of at least {least}" + (f" and less than {below}" if below is not None else "") + f", but it was {value!r}")
 
-        whole("hands", self.hands, 1)
+        whole("hands", self.hands, 0)
         whole("stack", self.stack, 1)
         number("timeout", self.timeout, 0)
 
@@ -84,5 +85,11 @@ class Rules:
                 raise ValueError(f"Expected the levels in blinds_go_up to get bigger, and to stay under ten times the first, but they were {self.blind_levels}")
 
         number("share in chips_cut", self.cut_share, 0, 1)
-        whole("chips in ante", self.ante, 0)
-        whole("from_orbit in ante", self.ante_from_orbit, 1)
+
+        number("chips in ante", self.ante, 0)
+        whole("from_orbit in ante", self.ante_from_orbit, 0)
+        whole("from_level in ante", self.ante_from_level, 0)
+
+        if not endless and self.hands == 0 and not (self.blinds_up_every_orbits or self.blinds_up_every_hands or self.cut_every_orbits or self.cut_every_hands):
+            # Players who only check and fold could pass the same blinds back and forth forever
+            raise ValueError("Expected the blinds to go up or the chips to be cut when hands is 0, as otherwise a match might never end")

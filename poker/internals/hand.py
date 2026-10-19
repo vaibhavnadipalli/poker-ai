@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from .card import Card, Rank
+from ..card import Card, Rank
 
 
 RANK_VALUES = {rank: value for value, rank in enumerate(Rank, start=2)}

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .player import Player, MyPlayer
 from .card import Card
 
@@ -7,14 +8,14 @@ class GameState:
         self.my_player = my_player
         self.players = players
         self.chips_in_pot = chips_in_pot
-        self.community_cards = community_cards if community_cards is not None else set()
-        self.small_blind = small_blind  # The blinds and ante for this hand, which go up as the match goes on
+        self.community_cards = community_cards if community_cards is not None else set()  # A new set each time, so states never share one
+        self.small_blind = small_blind
         self.big_blind = big_blind
         self.ante = ante
 
 
     def __repr__(self):
-        return f"GameState(my_player={self.my_player}, players={self.players}, chips_in_pot={self.chips_in_pot}, community_cards={self.community_cards}, small_blind={self.small_blind}, big_blind={self.big_blind}, ante={self.ante})"
+        return f"GameState(my_player={self.my_player}, players={self.players}, chips_in_pot={self.chips_in_pot}, community_cards={self.community_cards})"
 
 
     def __eq__(self, other):
@@ -33,7 +34,13 @@ class GameState:
         if self.community_cards != other.community_cards:
             return False
 
-        if (self.small_blind, self.big_blind, self.ante) != (other.small_blind, other.big_blind, other.ante):
+        if self.small_blind != other.small_blind:
+            return False
+
+        if self.big_blind != other.big_blind:
+            return False
+
+        if self.ante != other.ante:
             return False
 
         return True

@@ -3,11 +3,11 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["poker"]
+packages = ["poker", "poker.internals"]
 py-modules = ["myAI"]
 
 [tool.setuptools.package-data]
-poker = ["assets/*", "rules.yaml"]
+"poker.internals" = ["assets/*", "rules.yaml"]
 
 [project]
 name = "poker-ai"
@@ -19,4 +19,4 @@ dependencies = [
 ]
 
 [project.scripts]
-poker = "poker.cli:main"
+poker = "poker.internals.poker:main"

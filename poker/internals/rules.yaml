@@ -3,8 +3,8 @@
 # To try different rules, copy this file somewhere else, change the copy, and give it to poker with --rules.
 # A copy only needs the lines which are different, and everything else is taken from here.
 
-hands: 100    # A match stops after this many hands, if more than one player is still in
-stack: 200   # The chips each player starts with
+hands: 0      # 0 plays on until one player has every chip. Any other number stops after that many hands, and whoever has the most chips wins
+stack: 200    # The chips each player starts with, which is 100 big blinds
 timeout: 1    # The seconds a player gets for each action, or 0 for no limit
 
 blinds:
@@ -15,10 +15,10 @@ blinds:
 # Say how often in orbits or in hands, and leave the other as 0. Leaving both as 0 keeps the blinds the same all match.
 # An orbit completes after every player still in has had the button. Player eliminations do not recalculate past orbit progress.
 blinds_go_up:
-  every_orbits: 3
-  every_hands: 0
+  every_orbits: 0
+  every_hands: 15
   # How many times the starting blinds each level is. After the last level the pattern repeats, ten times bigger.
-  levels: [1, 1.5, 2, 3, 4, 5, 7.5]
+  levels: [1, 2, 3, 5]  # 1/2, 2/4, 3/6, 5/10, 10/20, 20/40, 30/60, 50/100 and so on
 
 # Every so often everyone loses a share of their chips, rounded in their favour.
 # This squeezes the players like bigger blinds do, but without the blinds changing. Losing 0.25 is the same as blinds a third bigger.
@@ -28,9 +28,12 @@ chips_cut:
   every_hands: 0
   share: 0.25
 
-# From a given orbit on, everyone pays an ante into the pot at the start of every hand, on top of the blinds.
-# An orbit completes once every player still in has had the button.
-# An ante of 0 chips turns this off.
+# From a given blind level on, everyone pays an ante into the pot at the start of every hand, on top of the blinds.
+# The chips are the ante at the starting blinds, and it goes up with the blinds, so it stays the same share of the big blind.
+# It can be a fraction of a chip, as it is rounded to whole chips at each level.
+# Count the levels from 1. Or start it from an orbit instead, by setting from_level to 0, where an orbit completes once every
+# player still in has had the button. With both as 0 it is paid from the first hand. An ante of 0 chips turns this off.
 ante:
-  chips: 2
-  from_orbit: 12
+  chips: 0.25     # An eighth of the big blind
+  from_level: 4
+  from_orbit: 0
