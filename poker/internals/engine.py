@@ -94,6 +94,7 @@ class Match:
         self.frames: list[dict] = []
         self.pot = 0
         self.current_bet = 0
+        self.min_raise = self.big_blind
 
     def play(self):
         # Plays until one player has every chip, or until the most hands the rules allow if they set a limit
@@ -208,6 +209,7 @@ class Match:
         self.frames = []
         self.pot = 0
         self.current_bet = 0
+        self.min_raise = self.big_blind
 
         small, big = (dealt[1], dealt[0]) if len(dealt) == 2 else (dealt[0], dealt[1])  # Heads-up, the button is the small blind
         small.blind = Blind.SMALL
@@ -255,6 +257,7 @@ class Match:
                 seat.bet = 0
 
             self.current_bet = 0
+            self.min_raise = self.big_blind
 
             cards = [deck.pop() for _ in range(count)]
             self.board += cards
@@ -368,11 +371,17 @@ class Match:
             text, label = f"calls {paid}", f"Call {paid}"
 
         else:
-            # A raise is by `amount` on top of the bet being called. There is no smallest raise, and a raise of more than the player has puts them all in.
+            # A raise is by `amount` on top of the bet being called.
             amount = min(action.amount, most)
+            if most < self.min_raise:
+                amount = most
+            else:
+                amount = max(amount, self.min_raise)
+
             opening = self.current_bet == 0
             self.put_in(seat, to_call + amount)
             self.current_bet = seat.bet
+            self.min_raise = max(self.min_raise, amount)
             text, label = (f"bets {seat.bet}", f"Bet {seat.bet}") if opening else (f"raises to {seat.bet}", f"Raise {seat.bet}")
 
         if seat.stack == 0 and kind in (Action.Kind.CALL, Action.Kind.RAISE):
@@ -406,7 +415,7 @@ class Match:
         my_player = MyPlayer(blind=seat.blind, chips_in_stack=seat.stack, chips_bet=seat.bet, hole_cards=set(seat.hole_cards))
         players = [my_player if other is seat else Player(blind=other.blind, has_folded=other.folded, chips_in_stack=other.stack, chips_bet=other.bet) for other in self.seats if other.dealt]
 
-        return GameState(my_player=my_player, players=players, chips_in_pot=self.pot, community_cards=set(self.board), small_blind=self.small_blind, big_blind=self.big_blind, ante=self.ante)
+        return GameState(my_player=my_player, players=players, chips_in_pot=self.pot, community_cards=set(self.board), small_blind=self.small_blind, big_blind=self.big_blind, min_raise=self.min_raise, ante=self.ante)
 
     def return_uncalled(self):
         # If nobody matched the biggest bet, the unmatched part goes back

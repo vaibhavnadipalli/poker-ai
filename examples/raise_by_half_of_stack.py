@@ -10,4 +10,4 @@ def myAI(state: GameState) -> Action:
     if left_after_calling <= 0:
         return Action.call()  # We can only just call, or not even that, so this puts us all in
 
-    return Action.raise_by(max(left_after_calling // 2, 1))
+    return Action.raise_by(min(max(left_after_calling // 2, state.min_raise), left_after_calling))

@@ -11,4 +11,4 @@ def myAI(state: GameState) -> Action:
         return Action.call()  # We can only just call, or not even that, so this puts us all in
 
     pot_after_calling = state.chips_in_pot + to_call
-    return Action.raise_by(min(max(pot_after_calling, 1), left_after_calling))
+    return Action.raise_by(min(max(pot_after_calling, state.min_raise), left_after_calling))

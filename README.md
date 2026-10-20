@@ -99,11 +99,10 @@ The bots in the `examples` folder each follow one simple rule. A rule never chan
 | `call_preflop.py` | Calls before the flop, then checks or folds |
 | `call_when_big_blind.py` | Calls any bet when it is the big blind, and otherwise checks or folds |
 | `call_when_blind.py` | Calls any bet when it is the small blind or the big blind, and otherwise checks or folds |
-| `raise_by_small_blind.py` | Raises by the small blind every time |
-| `raise_by_big_blind_unless_raised.py` | Raises by the big blind whenever nobody has bet more than the big blind, and folds to anything bigger |
-| `raise_by_half_of_stack.py` | Raises by half of the chips it has left after calling, every time |
-| `raise_by_pot.py` | Raises by the size of the pot every time |
-| `raise_by_pot_when_biggest_stack.py` | Raises by the size of the pot when it has the most chips at the table, and otherwise checks or folds |
+| `raise_by_big_blind_unless_raised.py` | Raises by at least the minimum raise whenever nobody has bet more than the big blind, and folds to anything bigger |
+| `raise_by_half_of_stack.py` | Raises by half of the chips it has left after calling, or the minimum raise if that is bigger |
+| `raise_by_pot.py` | Raises by the size of the pot, or the minimum raise if that is bigger |
+| `raise_by_pot_when_biggest_stack.py` | Raises by the size of the pot, or the minimum raise if that is bigger, when it has the most chips at the table, and otherwise checks or folds |
 | `go_all_in.py` | Goes all in every time |
 | `go_all_in_on_pair.py` | Goes all in when its two cards are a pair, and otherwise checks or folds |
 | `go_all_in_on_ace.py` | Goes all in when it holds an ace, and otherwise checks or folds |
@@ -127,15 +126,15 @@ This opens a window and plays a match in it, showing everyone's cards, the bets 
 
 #### ⚡ Run headless tests
 ```bash
-poker test 100 myAI.py examples/call.py examples/raise_by_small_blind.py examples/default.py
+poker test 100 myAI.py examples/call.py examples/raise_by_big_blind_unless_raised.py examples/default.py
 ```
 
 This plays 100 matches without showing them, and prints how each AI did.
 
 #### 🎲 Deterministic testing
 ```bash
-poker run myAI.py examples/raise_by_small_blind.py --seed 123
-poker test 100 myAI.py examples/raise_by_small_blind.py --seed 69
+poker run myAI.py examples/raise_by_big_blind_unless_raised.py --seed 123
+poker test 100 myAI.py examples/raise_by_big_blind_unless_raised.py --seed 69
 ```
 
 #### 🆚 Comparing versions of your AI
@@ -185,7 +184,7 @@ These are the rules every game is played by, including the weekly competition. A
 
 - The dealer button starts at a random seat and moves on to the next player every hand. The two players after the button pay the small and big blinds. When only two players are left, the button pays the small blind.
 - From the fourth level, everyone also pays an **ante** into the pot before the hand. An ante doesn't count towards calling a bet.
-- **Raising:** `Action.raise_by(amount)` calls the current bet and then raises it by `amount` more chips. There is no minimum raise. A raise of more than you have puts you all in. If you can't afford more than a call, or nobody left could call a raise, a raise counts as a call.
+- **Betting and raising:** `Action.raise_by(amount)` calls the current bet and then raises it by `amount` more chips. The minimum bet and raise are one big blind. The small blind is the only exception to the minimum bet when posting the blind. If a bet or raise is bigger than the current minimum raise, that amount becomes the new minimum raise for the rest of the betting round. The minimum raise resets to one big blind at the start of each betting round: pre-flop, flop, turn and river. A raise below the minimum is rounded up to the minimum when the player can afford it; otherwise, the player goes all in for their remaining chips. A short all-in below the minimum does not change the minimum raise. A raise of more than you have puts you all in. If nobody left could call a raise, a raise counts as a call.
 - **Calling** a bet bigger than your stack puts you all in.
 - Any part of a bet which nobody called goes back to the player who made it. Side pots are made for players who are all in, and a split pot gives any odd chips to the first players after the button.
 
@@ -258,7 +257,7 @@ These can be constructed using `Action.check()`, `Action.call()`, `Action.raise_
 The game is played by the [Tournament Rules](#-tournament-rules) above. A few things about the `state` your AI is given:
 
 - `chips_bet` is how many chips a player has put in during the current betting round, so the amount you need to call is the biggest `chips_bet` at the table minus your own. `chips_in_pot` is everything bet in the hand so far.
-- `small_blind`, `big_blind` and `ante` are the sizes for the current hand, so your AI can size its bets as the blinds go up.
+- `small_blind`, `big_blind` and `ante` are the sizes for the current hand, so your AI can size its bets as the blinds go up. `min_raise` is the minimum additional amount a bet or raise must be; it resets to `big_blind` each betting round and can increase during that round.
 
 ### Some Inspiration
 
@@ -289,12 +288,13 @@ Each week:
 
 1. **Download every team's bot.** In the website folder, this picks each team's latest submission which passed the tests:
    ```bash
-   PROJECT_ID=poker npx astro db execute db/download-snapshots.ts --remote
+   PROJECT_ID=poker PICK=latest npx astro db execute db/download-snapshots.ts --remote
    ```
 2. **Move the bots out of the website folder,** to keep them away from its credentials:
    ```bash
    mv snapshots/poker ~/poker-round-1
    ```
+   If `~/poker-round-1` already exists, e.g. from downloading again, move or delete it first. Otherwise `mv` puts the new bots inside it, as `~/poker-round-1/poker`, and the tournament still plays the old ones.
 3. **Check the bots and build the sandbox.** In the WarwickAI/competitions folder, with Docker running, this runs every team's tests again in a locked-down container of its own, and builds the `wai-results` image the tournament uses:
    ```bash
    STUDENT_FILES="myAI.py" ./results/run.sh ~/poker-round-1 ../poker-comp-update
