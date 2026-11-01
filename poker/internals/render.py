@@ -33,6 +33,8 @@ BOARD_Y = 220
 POT = (500, 376)
 
 SPEEDS = [0.5, 1, 2, 4, 8, 16]
+NAME_SCROLL_SPEED = 30  # How far a name too long for its space scrolls each second, so that all of it can be read
+NAME_SCROLL_PAUSE = 1.5  # Seconds it rests at each end
 ANIMATION = 0.35  # Seconds spent moving cards and chips at the start of each thing that happens
 HOLDS = {"deal": 0.7, "ante": 0.4, "blind": 0.3, "fold": 0.5, "check": 0.5, "call": 0.6, "raise": 0.8, "return": 0.6, "street": 0.9, "showdown": 1.2, "win": 1.8, "bust": 1.0}
 
@@ -414,7 +416,7 @@ class PokerRenderer:
                 marks -= 20
 
             rl.draw_circle(int(plate.x) + 15, int(plate.y) + 16, 5, rl.fade(self.PLAYER_COLOURS[seat], 0.4 if faded else 1.0))
-            rl.draw_text(self.fit(name, 20, marks - 31), int(plate.x) + 27, int(plate.y) + 7, 20, self.MUTED if faded else self.TEXT)
+            self.draw_name(name, int(plate.x) + 27, int(plate.y) + 7, marks - 31, self.MUTED if faded else self.TEXT)
 
             chips = round(lerp(before["stacks"][seat], now["stacks"][seat], amount))
             rl.draw_text(f"{chips:,}", int(plate.x) + 12, int(plate.y) + 30, 20, self.MUTED if faded else self.SOFT)
@@ -546,7 +548,7 @@ class PokerRenderer:
             chips = now["stacks"][seat] if now else None
             colour = self.MUTED if chips == 0 else self.TEXT
             rl.draw_circle(left + 5, y + 9, 5, rl.fade(self.PLAYER_COLOURS[seat], 0.4 if chips == 0 else 1.0))
-            rl.draw_text(self.fit(name, 20, 150), left + 18, y, 20, colour)
+            self.draw_name(name, left + 18, y, 150, colour)
 
             if chips is not None:
                 self.draw_text_right(f"{chips:,}", right, y, 20, colour)
@@ -673,6 +675,28 @@ class PokerRenderer:
 
     def draw_text_right(self, text: str, x: int, y: int, size: int, colour: rl.Color):
         rl.draw_text(text, x - rl.measure_text(text, size), y, size, colour)
+
+    def draw_name(self, name: str, x: int, y: int, width: int, colour: rl.Color):
+        # A name which is too long for its space scrolls through it and back, resting at each end
+        size = 20
+        overflow = rl.measure_text(name, size) - width
+
+        if overflow <= 0:
+            rl.draw_text(name, x, y, size, colour)
+            return
+
+        travel = overflow / NAME_SCROLL_SPEED
+        moment = rl.get_time() % (2 * (NAME_SCROLL_PAUSE + travel))
+
+        if moment < NAME_SCROLL_PAUSE + travel:
+            shift = overflow * max(0.0, moment - NAME_SCROLL_PAUSE) / travel  # Resting at the start, then scrolling to the end
+        else:
+            shift = overflow * (1 - max(0.0, moment - 2 * NAME_SCROLL_PAUSE - travel) / travel)  # Resting at the end, then scrolling back
+
+        # Only the name's space is drawn in. Clipping is measured in the canvas's own pixels, which the zoom doesn't apply to.
+        rl.begin_scissor_mode(x * CANVAS_ZOOM, (y - 2) * CANVAS_ZOOM, width * CANVAS_ZOOM, (size + 4) * CANVAS_ZOOM)
+        rl.draw_text_ex(rl.get_font_default(), name, rl.Vector2(x - shift, y), size, size // 10, colour)  # The same spacing as draw_text
+        rl.end_scissor_mode()
 
     def fit(self, text: str, size: int, width: int) -> str:
         text = text.encode("ascii", "replace").decode()

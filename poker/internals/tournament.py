@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import random
 from dataclasses import dataclass
 
 from .engine import AI, Match, Seat
@@ -94,6 +95,14 @@ class Tournament:
             # With more than one table, every table shares the same blinds. They all go up together, between hands, as soon as
             # the rules say they should at any table. A single table goes up by itself, exactly as a Match does.
             table.match.shared_blinds = count > 1
+
+        # Every player gets a random id for the whole tournament, so that an AI can tell players apart, and learn how each one
+        # plays, without knowing who they are. It comes from a random number generator of its own, so the cards don't change.
+        seats = [seat for table in self.tables for seat in table.match.seats]
+        ids = random.Random(None if seed is None else f"{seed}/ids").sample(range(1, 1_000_000), len(seats))
+
+        for seat, number in zip(seats, ids):
+            seat.id = number
 
         self.entrants = len(ais)
         self.exits: list[Exit] = []

@@ -60,6 +60,7 @@ class Seat:
         self.folded = False
         self.bet = 0  # Chips put in during the current betting round
         self.total_bet = 0  # Chips put in during the current hand
+        self.id: int | None = None  # What the AIs see this player as, which the tournament draws
         self.errors = 0
         self.peak = stack  # The most chips this player has had at the end of any hand, which is their score
 
@@ -412,8 +413,8 @@ class Match:
 
     def state_for(self, seat: Seat) -> GameState:
         # Everything is built fresh, so that an AI can't change the game by changing what it is given
-        my_player = MyPlayer(blind=seat.blind, chips_in_stack=seat.stack, chips_bet=seat.bet, hole_cards=set(seat.hole_cards))
-        players = [my_player if other is seat else Player(blind=other.blind, has_folded=other.folded, chips_in_stack=other.stack, chips_bet=other.bet) for other in self.seats if other.dealt]
+        my_player = MyPlayer(id=seat.id, blind=seat.blind, chips_in_stack=seat.stack, chips_bet=seat.bet, hole_cards=set(seat.hole_cards))
+        players = [my_player if other is seat else Player(id=other.id, blind=other.blind, has_folded=other.folded, chips_in_stack=other.stack, chips_bet=other.bet) for other in self.seats if other.dealt]
 
         return GameState(my_player=my_player, players=players, chips_in_pot=self.pot, community_cards=set(self.board), small_blind=self.small_blind, big_blind=self.big_blind, min_raise=self.min_raise, ante=self.ante)
 

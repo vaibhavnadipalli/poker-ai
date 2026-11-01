@@ -29,8 +29,9 @@ def sample_state(rng: random.Random) -> GameState:
     blinds = [Blind.SMALL, Blind.BIG] + [None] * rng.randint(0, 4)
     rng.shuffle(blinds)
 
-    my_player = MyPlayer(blind=blinds[0], chips_in_stack=rng.randint(1, 1000), chips_bet=rng.choice([0, rng.randint(1, 100)]), hole_cards=hole_cards)
-    others = [Player(blind=blind, has_folded=rng.random() < 0.25, chips_in_stack=rng.randint(0, 1000), chips_bet=rng.choice([0, rng.randint(1, 100)])) for blind in blinds[1:]]
+    ids = rng.sample(range(1, 1_000_000), len(blinds))
+    my_player = MyPlayer(id=ids[0], blind=blinds[0], chips_in_stack=rng.randint(1, 1000), chips_bet=rng.choice([0, rng.randint(1, 100)]), hole_cards=hole_cards)
+    others = [Player(id=id, blind=blind, has_folded=rng.random() < 0.25, chips_in_stack=rng.randint(0, 1000), chips_bet=rng.choice([0, rng.randint(1, 100)])) for id, blind in zip(ids[1:], blinds[1:])]
 
     players = [my_player] + others
     rng.shuffle(players)
